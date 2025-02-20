@@ -1,8 +1,10 @@
 [![Language](https://img.shields.io/badge/-Fortran-734f96?logo=fortran&logoColor=white)](https://github.com/topics/fortran)
+[![DOI](https://zenodo.org/badge/936093445.svg)](https://doi.org/10.5281/zenodo.14900905)
+[![Testing suite](https://github.com/irukoa/OneDim-QM-NI/actions/workflows/CI.yml/badge.svg)](https://github.com/irukoa/OneDim-QM-NI/actions/workflows/CI.yml)
 # OneDim-QM-NI
 ### One Dimensional Quantum Mechanics - Numerical Implementation.
 
-This is a tiny modern Fortran library for illustration and teaching purposes. Its aim is to study Fortran and one dimensional quantum systems.
+This is a tiny modern Fortran library for illustration and teaching purposes. Its aim is to help people study Fortran and one dimensional quantum systems.
 
 <details>
   <summary>Details: working principle</summary>
