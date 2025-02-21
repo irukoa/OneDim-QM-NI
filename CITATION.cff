@@ -10,10 +10,10 @@ authors:
     orcid: 'https://orcid.org/0000-0003-1915-8804'
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.10615838
+    value: 10.5281/zenodo.14900905
     description: Zenodo
-repository-code: 'https://github.com/irukoa/MAC'
-url: 'https://github.com/irukoa/MAC'
+repository-code: 'https://github.com/irukoa/OneDim-QM-NI'
+url: 'https://github.com/irukoa/OneDim-QM-NI'
 abstract: >-
   This is a tiny modern Fortran library for illustration
   and teaching purposes. Its aim is to study Fortran
