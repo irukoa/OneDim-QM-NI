@@ -4,7 +4,7 @@
 # OneDim-QM-NI
 ### One Dimensional Quantum Mechanics - Numerical Implementation.
 
-This is a tiny modern Fortran library for illustration and teaching purposes. Its aim is to help people study Fortran and one dimensional quantum systems.
+This is a tiny modern Fortran library for illustration and teaching purposes. Its aim is to help people study Fortran together with one dimensional quantum systems.
 
 <details>
   <summary>Details: working principle</summary>
@@ -13,13 +13,13 @@ This is a tiny modern Fortran library for illustration and teaching purposes. It
 
 ### Steady state systems.
 
-The library solves the time independent Schroedinger equation in the position basis,
+The library solves the time independent Schrödinger equation in the position basis,
 
 $$
 \frac{-\hbar^2}{2m}\frac{\partial^2 \Psi(x)}{\partial x^2} + V(x)\Psi(x) = E_n \Psi(x).
 $$
 
-The laplace operator is considered by its finite difference approximation,
+The Laplace operator is considered by its finite difference approximation,
 
 $$
 \frac{\partial^2 \Psi(x)}{\partial x^2} = \frac{\Psi(x+\epsilon) -2\Psi(x) + \Psi(x-\epsilon)}{\epsilon^2}.
@@ -62,7 +62,7 @@ Diagonalizing, we obtain the eigenvalues and eigenstates to pass from the positi
 
 ### Time dependent systems.
 
-The performs dynamical simulations by considering the Suzuki-Trotter expansion of the time evolution operator,
+The library performs dynamical simulations by considering the Suzuki-Trotter expansion of the time evolution operator,
 
 $$
 \hat{U}(t_k, t_{\text{st}}) = \prod_{j=1}^{k}\text{exp}\left[-\frac{i}{\hbar} \delta t \hat{H}(t_j) \right]+ \mathcal{O}(\delta t^2),
@@ -86,10 +86,15 @@ type, public :: steady_state_system
 type, extends(steady_state_system), public :: time_dependent_system
 ```
 
+The library works with double precision numbers.
+``` fortran
+integer, parameter, public :: dp = kind(1.0d0)
+```
+
 ## `type(steady_state_system) :: a`
 Procedure | Description | Parameters
 --- | --- | ---
-Constructor subroutine. <br /> Usage: <br /> `call a%init(name, type, mass, start, finish, steps, args, potential[, silent])` | Initializes an steady state system and calculates its eigenvalues. | `character(len=*), intent(in) :: name`: name of the system. <br />`character(len=*), intent(in) :: type`: either `electronic` or `atomic`. If `electronic`, assumes energies in eV, lengths in $\text{\r{A}}$-s, masses in units of the electron mass $m_e$ and time scales in fs-s. If `atomic`, assumes energies in peV, lengths in $\mu$m-s, masses in units of the atomic mass unit AMU and time scales in ms-s. <br /> `real(dp), intent(in) :: mass`: mass of the particle in electronic or atomic units. <br /> `real(dp), intent(in) :: start, finish`: lenght of the 1-dimensional space in electronic or atomic units. <br />`integer, intent(in) :: steps`: number of discretization steps of the interval and number of quantum levels.<br />`real(dp), intent(in) :: args(:)`: Arguments passed to the potential function. <br />`procedure(frml) :: potential`: implementation of the potential function in electronic or atomic units. Must comply with interface [`frml`](#intfc_frml).<br />`logical, optional, intent(in) :: silent`: if `.true.`, the program will not write to terminal.
+Constructor subroutine. <br /> Usage: <br /> `call a%init(name, type, mass, start, finish, steps, args, potential[, silent])` | Initializes an steady state system and calculates its eigenvalues. | `character(len=*), intent(in) :: name`: name of the system. <br />`character(len=*), intent(in) :: type`: either `electronic` or `atomic`. If `electronic`, assumes energies in eV, lengths in $\text{\r{A}}$-s, masses in units of the electron mass $m_e$ and time scales in fs-s. If `atomic`, assumes energies in peV, lengths in $\mu$m-s, masses in units of the atomic mass unit AMU and time scales in ms-s. <br /> `real(dp), intent(in) :: mass`: mass of the particle in electronic or atomic units. <br /> `real(dp), intent(in) :: start, finish`: length of the 1-dimensional space in electronic or atomic units. <br />`integer, intent(in) :: steps`: number of discretization steps of the interval and number of quantum levels.<br />`real(dp), intent(in) :: args(:)`: Arguments passed to the potential function. <br />`procedure(frml) :: potential`: implementation of the potential function in electronic or atomic units. Must comply with interface [`frml`](#intfc_frml).<br />`logical, optional, intent(in) :: silent`: if `.true.`, the program will not write to terminal.
 
 Component | Description
 --- | ---
@@ -115,16 +120,15 @@ end interface
 ```
 
 ## `type(time_dependent_system) :: b`
-Aditionally to all routines and components of `type(steady_state_system)`, contains:
+Additionally to all routines and components of `type(steady_state_system)`, contains:
 Procedure | Description | Parameters
 --- | --- | ---
 Constructor subroutine. <br /> Usage: <br /> `call b%init_td(t_start, t_end, t_steps, t_args, Ht, [selected_states, selected_states_start, silent])` | Initializes a dynamics simulation. | `real(dp), intent(in) :: t_start, t_end`: lenght of the time interval in electronic or atomic units. <br />`integer, intent(in) :: steps`: number of discretization steps in the time interval. <br />`real(dp), intent(in) :: t_args(:)`: Arguments passed to the time dependent Hamiltonian function. <br />`procedure(tdep_hamil) :: Ht`: implementation of the time dependent Hamiltonian function in electronic or atomic units. Must comply with interface [`tdep_hamil`](#intfc_tdep_hamil).<br />`integer, optional, intent(in) :: selected_states, selected_states_start`: for approximations. If specified, the dynamics simulation it will only account for the states [`selected_states_start`, `selected_states_start + selected_states - 1`].<br />`logical, optional, intent(in) :: silent`: if `.true.`, the program will not write to terminal.
-Dynamical simulation starter. <br /> Usage: <br /> `call b%get_tevop()` | Performs the dynamics simulation, granting acess to the `b%tevop(:, :, :)` time evolution operator.
+Dynamical simulation starter. <br /> Usage: <br /> `call b%get_tevop()` | Performs the dynamics simulation, granting access to the `b%tevop(:, :, :)` time evolution operator.
 
 Component | Description
 --- | ---
 `b%tevop(N, N, Nt)` | Time evolution operator in the Hamiltonian basis. `N` is the number of selected states (`selected_states` if it was specified in the constructor or the number of discretization points otherwise). `Nt` is the number of discretization points in the time interval. `b%tevop(:, :, ik)` is a matrix representing $\hat{U}(t_k, t_s)$, where $t_k = t_s + (t_e - t_s) \times (k-1)/(N_t-1)$.
-
 
 <a id="intfc_tdep_hamil"></a>
 ### Interface `tdep_hamil`:

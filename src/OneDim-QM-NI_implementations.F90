@@ -1,6 +1,7 @@
 module OneDim_QM_NI_implementations
 
   use OneDim_QM_NI_kinds, only: dp
+  use OneDim_QM_NI_defs, only: time_conversion_factor
 
   implicit none
   private
@@ -26,7 +27,7 @@ contains
     real(dp), intent(in) :: args(:)
 
     real(dp) :: u
-    !args(1) stands for the "spring" constant.
+    !args(1) stands for the "spring constant".
     u = 0.5_dp*args(1)*position**2
   end function harmonic_oscillator_pot
 
@@ -46,9 +47,9 @@ contains
     real(dp), intent(in) :: targs(:)
 
     complex(dp) :: u(size(H(:, 1)), size(H(1, :)))
-    !targs(1) stands for e*amplitude, measured in eV/A or neV/\mu m.
-    !targs(2) stands for the driving frequency in units of inverse time.
-    u = H + targs(1)*cos(targs(2)*time)*pos
+    !targs(1) stands for e*amplitude, measured in eV/A or peV/\mu m.
+    !targs(2) stands for the driving frequency in either eV-s or peV-s.
+    u = H + targs(1)*cos(targs(2)*time_conversion_factor*time)*pos
   end function dipole_cosine_hamil
 
 end module OneDim_QM_NI_implementations

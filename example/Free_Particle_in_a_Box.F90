@@ -10,8 +10,8 @@ program Free_Particle_in_a_Box
 
   !In this example I will show you how I simulate a simple quantum system's
   !steady state properties and dynamics. I know that this file is full
-  !of comments and that can overwhelming. However, I believe that reading
-  !carefully these comments will help you understand whats going on,
+  !of comments and that can be overwhelming. However, I believe that reading
+  !carefully these comments will help you understand what is going on,
   !gaining insight on the numerical scheme.
   !Also, I recommend that you read the terminal log to understand
   !what the code is doing.
@@ -34,8 +34,7 @@ program Free_Particle_in_a_Box
   !---CONTROL PANEL---!
   !These parameters apply to the definition of the steady state system.
   real(dp) :: box_length = 1.0_dp
-
-  integer :: N = 100 !Discretization points/number of states.
+  integer :: N = 100               !Discretization points/number of states.
 
   !These parameters apply to the dynamical system.
   real(dp) :: time_interval = 1.0_dp
@@ -58,14 +57,14 @@ program Free_Particle_in_a_Box
                  args=[1.0_dp], &                       !we provide any "external arguments" appearing in the potential (in this case, a dummy array),
                  potential=particle_in_a_box_potential) !and we point the program to our implementation of the potential (see the contains section).
 
-  !(*) If the system is "electronic", the potential must be expressed in eV-s, the mass in units of the electron mass m_e and all lenghts are in \r{A}-s.
-  !If the system is "atomic", the potential must be expressed in peV-s, the mass in units of the atomic mass unit, AMU, and all lenghts are in \mu m-s.
+  !(*) If the system is "electronic", the potential must be expressed in eV-s, the mass in units of the electron mass m_e and all lengths are in \r{A}-s.
+  !If the system is "atomic", the potential must be expressed in peV-s, the mass in units of the atomic mass unit, AMU, and all lengths are in \mu m-s.
 
   !When running the above line, the program will write to elements PiaB%eig(:), PiaB%rot(:, :), PiaB%pos(:, :), which contain:
   !the energy levels in ascending order, the wavefunctions \psi_n(x_i) = PiaB%rot(i, n), and the position operator in the basis
   !which makes the Hamiltonian diagonal, x_{nm} = PiaB%pos(n, m), respectively.
 
-  !First, since the particle in a box can be solved analitically, we will compare the accuracy of the levels.
+  !First, since the particle in a box can be solved analytically, we will compare the accuracy of the levels.
   !We do this by writing to file energy differences between contiguous levels.
   open (newunit=out, action="write", status="unknown", file="PiaB_Levels.dat")
   do i = 2, N
@@ -75,7 +74,7 @@ program Free_Particle_in_a_Box
       100*abs(aux1 - aux2)/abs(aux2)                                                 !and relative error.
   enddo
   close (unit=out)
-  !We can either examine the file or use gnuplot to see how the numerics relate to analitic results.
+  !We can either examine the file or use gnuplot to see how the numeric results relate to analytical results.
   !We observe that only the first ~8 levels provide errors below 5%. By repeating the calculation by setting
   !N = 1000 in the control panel, we see that the error decreases significantly, given that the first
   !~169 levels provide errors below 5%. The takeaway is that a large N has to be set in order to
@@ -101,8 +100,8 @@ program Free_Particle_in_a_Box
 
   !So far so good, we know that the results are accurate and can be improved by considering larger and larger N-s.
   !Just one thing, the computational time increases as N^3 due to a step involving matrix diagonalization,
-  !so take that into account when setting N, also, if N is really really large the program will complain
-  !due to underflow errors involving the numerical shceme.
+  !so take that into account when setting N, also, if N is really large the program will complain
+  !due to underflow errors involving the numerical scheme.
 
   !Now, on to dynamics. Since we will consider that the particle is free,
   !the time dependence of each level is straightforward, just exp(-i*E_n*t/\hbar).
@@ -122,7 +121,7 @@ program Free_Particle_in_a_Box
   !It is our responsibility to consider N large enough such that states [starting_level, starting_level + number_of_selected_levels - 1] are accurately
   !described.
 
-  !This will perform the dynamical simulation by employing a exponential integrator (the accuratest thing we can get). The larger Nt, the more accurate
+  !This will perform the dynamical simulation by employing a exponential integrator (the most accurate thing we can get). The larger Nt, the more accurate
   !time propagation. However, take care, computational time scales as Nt*(number_of_selected_levels)^3. Usually, you will need to find
   !a compromise between Nt and number_of_selected_levels, or calculations become large really fast.
   call PiaB%get_tevop(parallel=.true.)
@@ -156,7 +155,7 @@ contains
 
   function non_interacting_particle_hamiltonian(H, pos, time, targs) result(u)
     !Express the time dependent Hamiltonian in terms of the Hamiltonian, position operator,
-    !time variable and external arguments.
+    !time variable, and external arguments.
     complex(dp), intent(in) :: H(:, :), pos(:, :)
     real(dp), intent(in) :: time
     real(dp), intent(in) :: targs(:)

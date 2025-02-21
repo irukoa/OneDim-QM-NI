@@ -12,15 +12,15 @@ program Experimental_System
   !It is a simplified version of the program I created when
   !I was in Firenze, but the fundamentals are here.
 
-  !First we define the constant to pass from nK to peV
+  !First, we define the constant to pass from nK to peV
   !and give the potassium mass in AMUs.
   real(dp), parameter :: kb_over_e_in_peV_per_nK = 0.08617333262_dp
   real(dp), parameter :: potassium_mass_in_AMU = 39.0983_dp
 
   type(time_dependent_system) :: Exp_Sys
 
-  !In this case, the control panel contains the experimentally tunable parameters,
-  !and the number of states. Experimental people gave me this input.
+  !In this case, the control panel contains the experimentally tuneable parameters,
+  !and the number of states. This is the input experimental people gave me.
 
   !---CONTROL PANEL---!
   real(dp), parameter :: box_length = 10.0_dp, &
@@ -38,7 +38,7 @@ program Experimental_System
   integer, parameter :: N = 1025
   !-------------------!
 
-  !Definitions to obatain the tunnelling coefficient.
+  !Definitions to obtain the tunnelling coefficient.
   real(dp) :: variance = 0.1_dp*box_length
   complex(dp) :: locL(N), locR(N)
   complex(dp) :: overlap(2, 2), U(2, 2), V(2, 2), &
@@ -50,8 +50,8 @@ program Experimental_System
   character(len=120) :: aux
   real(dp) :: x
 
-  !I define an array containing the arguments, this will be passed to the function implementing
-  !the potential in the contains section by the call to initialize the steady state system.
+  !I define an array containing the arguments. This will be passed by the call to initialize
+  !the steady state system to the function implementing the potential in the contains section.
   real(dp) :: pot_args(8)
 
   pot_args = [leading_amplitude, leading_amplitude*amp2_over_leading, leading_amplitude*amp3_over_leading, &
@@ -85,21 +85,21 @@ program Experimental_System
   close (unit=out)
 
   !---------------------SOME THOUGHTS.
-  !Now comes my doubt No. 1: the potential implemented here is not simmilar to that appearing in the
+  !Now comes my doubt No. 1: the potential implemented here is not similar to that appearing in the
   !poster, but it is what they have in the MATLAB programs.
 
   !And the doubt No. 2: the spectrum is continuum-like after the first few levels
-  !(the differences between states is almost constant),
-  !this is nice, but I dont know how many states to include in a future dynamics simulation.
+  !(the differences between states are almost constant),
+  !this is nice, but I do not know how many states to include in a future dynamics’ simulation.
   !My guess may be just the first 2~3, since there is a nice 0.88502002 peV difference between states #1 and #2
   !and a really small 0.00323361 peV difference between states #2 and #3, making them almost degenerate.
   !Then, we have a big jump of 2.53050062 peV-s from level #3 to #4. If we take only the first 2 levels,
-  !we can simulate everything as a 2-level system and we can define \sigma states and everything we need.
+  !we can simulate everything as a 2-level system, and we can define \sigma states and everything we need.
 
-  !Remark: the energy of h*f = 2.53050062 peV corresponds to a frequency of 612 Hz-s, which I believe is
+  !Remark: the energy h*f = 2.53050062 peV corresponds to a frequency of 612 Hz-s, which I believe is
   !an experimentally achievable driving frequency.
 
-  !Doubt No. 3: regarding dynamics, I dont remember the formula of the time dependent Hamiltonian, which we need,
+  !Doubt No. 3: regarding dynamics, I do not remember the formula of the time dependent Hamiltonian, which we need,
   !but as long as it was expressed in terms of the Hamiltonian, the position and external arguments everything
   !should be doable easily.
   !--------------------- END THOUGHTS.
@@ -107,7 +107,7 @@ program Experimental_System
   !---------------------TUNNELLING CALCULATION.
 
   !Now, I will obtain the tunnelling coefficient after truncating the basis to just the first 2 states.
-  !Note that tunnellings are intrinsically gauge dependent quantities,
+  !Note that the tunnelling coefficients are intrinsically gauge dependent quantities,
   !but let me present what I believe is the correct procedure to obtain them:
 
   !First, I define left and right localized states, |L'> and |R'>, using Gaussian functions, each localized in a side of the well.
@@ -133,7 +133,7 @@ program Experimental_System
   !In reality, this is not possible since these states do not span the same subspace as the
   !|1>, |2> states do, |L'><L'| + |R'><R'| =/ |1><1| + |2><2| =/ Id.
 
-  !So I define a matrix containing the products:
+  !So, I define a matrix containing the products:
   ! <1|L'> <2|L'>
   ! <1|R'> <2|R'>
   overlap(1, 1) = box_length*extrapolation(locL*conjg(Exp_Sys%rot(:, 1)))
@@ -142,12 +142,12 @@ program Experimental_System
   overlap(2, 2) = box_length*extrapolation(locR*conjg(Exp_Sys%rot(:, 2)))
   !This matrix measures to what degree the basis {|L'>, |R'>} span the same space as
   !the {|1>, |2>} do. In other words, how "aligned" these are in the infinite dimensional
-  !state space. If they were aligned, this matrix will be unitary, else no.
+  !state space. If they were aligned, this matrix would be unitary, else no.
 
   !At this point I perform a singular value decomposition (SVD) of this matrix. This process
-  !decomposes a matrix as a product USV*, with U, V unitay and S diagonal with real positive entries.
+  !decomposes a matrix as a product USV*, with U, V unitary and S diagonal with real positive entries.
   call SVD(matrix=overlap, U=U, V=V, eig=eig)
-  !The diagonal entries of S, the eigenvalues measure the alignement of the two bases.
+  !The diagonal entries of S, the eigenvalues, measure the alignment of the two bases.
   !Ideally, both eigenvalues should be 1, I will show them in the terminal:
   write (unit=stdout, fmt="(A)"), "SVD Decomposition:"
   write (unit=aux, fmt="(F15.8)") eig(1)
@@ -157,7 +157,7 @@ program Experimental_System
   write (unit=stdout, fmt="(A)"), ""
   !As you see, not even close! The takeaway is that the |L'> and |R'> states cannot
   !span the {|1>, |2>} basis. However, we can define an alternative basis, {|L>, |R>},
-  !which spans the same space as the {|1>, |2>} basis and is as simmilar as possible
+  !which spans the same space as the {|1>, |2>} basis and is as similar as possible
   !to the previous {|L'>, |R'>} basis. This is done by considering the following:
   overlap = matmul(U, conjg(transpose(V)))
   !Notice that the eigenvalues of the matrix S do not appear here, but U, and V do.
@@ -167,7 +167,7 @@ program Experimental_System
   !in terms of the original |1>, |2> eigenstates of the Hamiltonian.
   locL = overlap(1, 1)*Exp_Sys%rot(:, 1) + overlap(1, 2)*Exp_Sys%rot(:, 2)
   locR = overlap(2, 1)*Exp_Sys%rot(:, 1) + overlap(2, 2)*Exp_Sys%rot(:, 2)
-  !As I mentioned, this are as simmilar as possible to the localized states |L'> and
+  !As I mentioned, these are as similar as possible to the localized states |L'> and
   !|R'> while spanning the same space as the {|1>, |2>} basis.
   !I will plot the probability density:
   open (newunit=out, action="write", status="unknown", file="Exp_Loc_PDs.dat")
@@ -180,7 +180,7 @@ program Experimental_System
   !In a sense, this basis is the "Wannier gauge" of this simple system.
   !All that is left is to rotate the diagonal Hamiltonian to this localized basis.
   Hw = matmul(overlap, matmul(Exp_Sys%Hh(1:2, 1:2), conjg(transpose(overlap))))
-  !The off diagonal elements are the tunnelling coefficients.
+  !The off-diagonal elements are the tunnelling coefficients.
   write (unit=stdout, fmt="(A)"), "Tunnelling coefficient:"
   write (unit=aux, fmt="(F15.8)") real(Hw(1, 2), dp)
   write (unit=stdout, fmt="(A)"), "[Re] = "//trim(adjustl(aux))//" peV."
@@ -193,8 +193,8 @@ program Experimental_System
 contains
 
   function experimental_potential(position, args) result(u)
-    !The "args" appearing here refers to the experimental arguments,
-    !which I gave values above. Notice that the order of arguments is
+    !The "args" appearing here refers to the experimental arguments.
+    !I gave the values above. Notice that the order of arguments is
     !important, as well as the number of arguments.
     real(dp), intent(in) :: position
     real(dp), intent(in) :: args(:)

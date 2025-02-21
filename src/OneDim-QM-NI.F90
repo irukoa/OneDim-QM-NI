@@ -57,28 +57,28 @@ module OneDim_QM_NI
     character(len=120) :: name
     integer :: tp
     real(dp) :: mass
-    real(dp) :: start, finish !1-Dimensional interval.
-    integer :: number_of_states !Number of discretization points in the interval (coincides with the number of states).
-    complex(dp), allocatable :: Hx(:, :) !Hamiltonian in the position basis.
-    complex(dp), allocatable :: Hh(:, :) !Hamiltonian in the Hamiltonian basis (diagonal).
-    real(dp), allocatable :: eig(:) !Energy levels.
-    complex(dp), allocatable :: rot(:, :) !Rotation from position to Hamiltonian basis. Normalized to be interpreted as wave-functions.
-    complex(dp), allocatable :: pos(:, :) !Position matrix elements in the Hamiltonian basis.
+    real(dp) :: start, finish                             !1-Dimensional interval.
+    integer :: number_of_states                           !Number of discretization points in the interval (coincides with the number of states).
+    complex(dp), allocatable :: Hx(:, :)                  !Hamiltonian in the position basis.
+    complex(dp), allocatable :: Hh(:, :)                  !Hamiltonian in the Hamiltonian basis (diagonal).
+    real(dp), allocatable :: eig(:)                       !Energy levels.
+    complex(dp), allocatable :: rot(:, :)                 !Rotation from position to Hamiltonian basis. Normalized to correspond to wave-functions.
+    complex(dp), allocatable :: pos(:, :)                 !Position matrix elements in the Hamiltonian basis.
     procedure(frml), nopass, pointer :: formula => null() !Implementation of the potential function.
-    real(dp), allocatable :: args(:) !External arguments in potential function.
+    real(dp), allocatable :: args(:)                      !External arguments in potential function.
     logical :: initialized = .false.
   contains
     procedure, pass(self) :: init => construcor_st
   end type
 
   type, extends(steady_state_system) :: time_dependent_system
-    real(dp) :: time_start, time_end !Time interval.
-    integer :: time_steps !Number of discretization points.
-    integer :: selected_states !Selected states (for approximations).
-    integer :: selected_states_start = 1 !First chosen state.
+    real(dp) :: time_start, time_end                                !Time interval.
+    integer :: time_steps                                           !Number of discretization points.
+    integer :: selected_states                                      !Selected states (for approximations).
+    integer :: selected_states_start = 1                            !First chosen state.
     procedure(tdep_hamil), nopass, pointer :: hamiltonian => null() !Implementation of the time dependent Hamiltonian.
-    real(dp), allocatable :: t_args(:) !External arguments in time dependent Hamiltonian.
-    complex(dp), allocatable :: tevop(:, :, :) !Time evolution operator.
+    real(dp), allocatable :: t_args(:)                              !External arguments in time dependent Hamiltonian.
+    complex(dp), allocatable :: tevop(:, :, :)                      !Time evolution operator.
     logical :: sampling_ready = .false.
   contains
     procedure, pass(self) :: init_td => construcor_td
@@ -115,7 +115,7 @@ contains
       self%tp = 0
     case ("atomic")
       !Expected: potential function in pico eVs, mass in units
-      !of AMUs, lengths in micro metres.
+      !of AMUs, lengths in micro meters.
       prefactor = atomic_kinetic_prefactor/mass
       self%tp = 1
     case default
