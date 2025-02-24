@@ -328,7 +328,11 @@ contains
         if (selected_states_start > self%number_of_states) &
           error stop "TD System specification error: selected_states_start < max_number_of_states."
         self%selected_states_start = selected_states_start
+      else
+        self%selected_states_start = 1
       endif
+    else
+      self%selected_states = self%number_of_states
     endif
 
     if ((present(selected_states_start)) .and. (.not. present(selected_states))) &
