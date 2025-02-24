@@ -4,31 +4,44 @@ module OneDim_QM_NI
   use OMP_LIB
 
   use OneDim_QM_NI_kinds, only: dp
-  use OneDim_QM_NI_defs, only: cmplx_0, cmplx_1, cmplx_i, &
+  use OneDim_QM_NI_defs, only: pi, cmplx_0, cmplx_1, cmplx_i, &
     electronic_kinetic_prefactor, atomic_kinetic_prefactor, &
     time_conversion_factor
+  use OneDim_QM_NI_utility, only: diagonalize, inverse, deg_list, schur, SVD, expsh, logu
   use OneDim_QM_NI_implementations, only: particle_in_a_box_pot, harmonic_oscillator_pot, &
     free_particle_hamil, dipole_cosine_hamil
-  use WannInt, only: diagonalize, SVD, expsh
-  use Extrapolation_Integration, only: extrapolation
 
   implicit none
   private
 
   real(dp), parameter :: underflow_tolerance = 1.0E3*epsilon(1.0_dp)
 
+  !Definitions in this module.
   public :: steady_state_system
   public :: time_dependent_system
 
+  !Implementations of potentials/Hamiltonians.
   public :: particle_in_a_box_pot
   public :: harmonic_oscillator_pot
   public :: free_particle_hamil
   public :: dipole_cosine_hamil
 
-  !Utilities
+  !Utilities and external constants.
   public :: diagonalize
+  public :: inverse
+  public :: deg_list
+  public :: schur
   public :: SVD
-  public :: extrapolation
+  public :: expsh
+  public :: logu
+
+  public :: cmplx_0, cmplx_1, cmplx_i
+  public :: pi
+  public :: electronic_kinetic_prefactor
+  public :: atomic_kinetic_prefactor
+  public :: time_conversion_factor
+
+  public :: dp
 
   abstract interface
     function frml(position, args) result(u)

@@ -2,9 +2,8 @@ program Free_Particle_in_a_Box
 
   use Iso_Fortran_ENV, only: stdout => output_unit
 
-  use OneDim_QM_NI_kinds, only: dp
-  use OneDim_QM_NI_defs, only: cmplx_i, pi, electronic_kinetic_prefactor
-  use OneDim_QM_NI, only: time_dependent_system
+  use OneDim_QM_NI, only: dp, cmplx_i, pi, &
+    electronic_kinetic_prefactor, time_dependent_system
 
   implicit none
 

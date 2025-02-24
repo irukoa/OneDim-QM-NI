@@ -9,7 +9,7 @@ program main
 
   implicit none
 
-  character(len=12) :: version = "v1.0.0"
+  character(len=12) :: version = "v1.0.1"
 
   write (unit=stdout, fmt="(A)") &
     "Auxiliary library 'One Dimensional Quantum Mechanics: Numerical Implementations', "//trim(adjustl(version))//" built."

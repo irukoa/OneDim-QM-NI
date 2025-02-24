@@ -1,10 +1,10 @@
 name = "OneDim-QM-NI"
-version = "1.0.0"
+version = "1.0.1"
 
 license = "GNU General Public License v3.0"
 author = "Álvaro R. Puente-Uriona"
 maintainer = "alvaro.ruiz@ehu.eus"
-copyright = "Copyright 2024, Álvaro R. Puente-Uriona"
+copyright = "Copyright 2025, Álvaro R. Puente-Uriona"
 
 [library]
 source-dir="src"
@@ -14,6 +14,7 @@ auto-executables = true
 auto-tests = true
 auto-examples = true
 module-naming = false
+link = ["blas", "lapack"]
 
 [install]
 library = true
@@ -24,6 +25,4 @@ implicit-external = true
 source-form = "free"
 
 [dependencies]
-WannInt = { git="https://github.com/irukoa/WannInt.git", tag = "v1.0.2" }
-Extrapolation_Integration = { git="https://github.com/irukoa/Extrapolation_Integration.git", tag = "v1.0.0" }
 openmp = "*"

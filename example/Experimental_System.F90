@@ -2,9 +2,8 @@ program Experimental_System
 
   use Iso_Fortran_ENV, only: stdout => output_unit
 
-  use OneDim_QM_NI_kinds, only: dp
-  use OneDim_QM_NI_defs, only: cmplx_i, cmplx_1, pi, electronic_kinetic_prefactor
-  use OneDim_QM_NI, only: time_dependent_system, SVD, diagonalize, extrapolation
+  use OneDim_QM_NI, only: dp, cmplx_1, pi, &
+    time_dependent_system, SVD
 
   implicit none
 
@@ -136,10 +135,10 @@ program Experimental_System
   !So, I define a matrix containing the products:
   ! <1|L'> <2|L'>
   ! <1|R'> <2|R'>
-  overlap(1, 1) = box_length*extrapolation(locL*conjg(Exp_Sys%rot(:, 1)))
-  overlap(1, 2) = box_length*extrapolation(locL*conjg(Exp_Sys%rot(:, 2)))
-  overlap(2, 1) = box_length*extrapolation(locR*conjg(Exp_Sys%rot(:, 1)))
-  overlap(2, 2) = box_length*extrapolation(locR*conjg(Exp_Sys%rot(:, 2)))
+  overlap(1, 1) = box_length*sum(locL*conjg(Exp_Sys%rot(:, 1)))/real(N - 1, dp)
+  overlap(1, 2) = box_length*sum(locL*conjg(Exp_Sys%rot(:, 2)))/real(N - 1, dp)
+  overlap(2, 1) = box_length*sum(locR*conjg(Exp_Sys%rot(:, 1)))/real(N - 1, dp)
+  overlap(2, 2) = box_length*sum(locR*conjg(Exp_Sys%rot(:, 2)))/real(N - 1, dp)
   !This matrix measures to what degree the basis {|L'>, |R'>} span the same space as
   !the {|1>, |2>} do. In other words, how "aligned" these are in the infinite dimensional
   !state space. If they were aligned, this matrix would be unitary, else no.
