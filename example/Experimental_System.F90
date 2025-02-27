@@ -90,9 +90,9 @@ program Experimental_System
   !And the doubt No. 2: the spectrum is continuum-like after the first few levels
   !(the differences between states are almost constant),
   !this is nice, but I do not know how many states to include in a future dynamics’ simulation.
-  !My guess may be just the first 2~3, since there is a nice 0.88502002 peV difference between states #1 and #2
+  !My guess may be just the first 2~3, since there is a nice 0.8850 peV difference between states #1 and #2
   !and a really small 0.00323361 peV difference between states #2 and #3, making them almost degenerate.
-  !Then, we have a big jump of 2.53050062 peV-s from level #3 to #4. If we take only the first 2 levels,
+  !Then, we have a big jump of 2.530 peV-s from level #3 to #4. If we take only the first 2 levels,
   !we can simulate everything as a 2-level system, and we can define \sigma states and everything we need.
 
   !Remark: the energy h*f = 2.53050062 peV corresponds to a frequency of 612 Hz-s, which I believe is

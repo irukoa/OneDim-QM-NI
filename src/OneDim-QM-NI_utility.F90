@@ -17,6 +17,8 @@ module OneDim_QM_NI_utility
     module procedure :: diagonalize_hermitian
   end interface
 
+  public :: diagonalize_hermitian_generalized
+
   interface inverse
     module procedure :: inverse_real
     module procedure :: inverse_complex
@@ -148,6 +150,81 @@ contains
     if (present(eig)) eig = lst
 
   end subroutine diagonalize_hermitian
+
+  subroutine diagonalize_hermitian_generalized(matrix, metric, P, D, eig)
+    !===========================================!
+    !                                           !
+    !  Given a Hermitian matrix, computes the   !
+    !  elements for its diagonalization with    !
+    !  respect to a metric, P, D:               !
+    !  matrix = metric*P*D*P^dagger, where      !
+    !  D_nm = delta_nm eig_n for eig_n real.    !
+    !                                           !
+    !===========================================!
+
+    complex(dp), intent(in)  :: matrix(:, :), metric(:, :)
+    complex(dp), intent(out) :: P(size(matrix(:, 1)), size(matrix(1, :)))
+
+    complex(dp), optional, intent(out) :: D(size(matrix(:, 1)), size(matrix(1, :)))
+    real(dp), optional, intent(out)    :: eig(size(matrix(:, 1)))
+
+    complex(dp) :: metric_copy(size(metric(:, 1)), size(metric(1, :)))
+
+    complex(dp), allocatable :: work(:)
+    real(dp), allocatable    :: rwork(:)
+    integer, allocatable     :: iwork(:)
+    real(dp)                 :: lst(size(matrix(:, 1)))
+    integer                  :: dim, info, &
+                                lwork, lrwork, liwork, &
+                                i
+    external                 :: zhegvd
+
+    character(len=1024) :: errormsg
+
+    if (size(matrix(:, 1)) /= size(matrix(1, :))) error stop &
+      "Matrix to diagonalize is not square."
+    if (size(metric(:, 1)) /= size(metric(1, :))) error stop &
+      "Metric is not square."
+    if (size(matrix(:, 1)) /= size(metric(:, 1))) error stop &
+      "Matrix and metric are different sizes."
+    dim = size(matrix(:, 1))
+
+    !Initialization.
+    P = matrix
+    metric_copy = metric
+
+    !Query optimal workspace.
+    lwork = -1; lrwork = -1; liwork = -1
+    allocate (work(1), rwork(1), iwork(1))
+    call zhegvd(1, 'V', 'U', dim, P, dim, metric_copy, dim, lst, &
+                work, lwork, rwork, lrwork, iwork, liwork, info)
+    lwork = nint(real(work(1), dp))
+    lrwork = nint(real(rwork(1), dp))
+    liwork = nint(real(iwork(1), dp))
+    deallocate (work, rwork, iwork)
+
+    !Calculation.
+    allocate (work(lwork), rwork(lrwork), iwork(liwork))
+    call zhegvd(1, 'V', 'U', dim, P, dim, metric_copy, dim, lst, &
+                work, lwork, rwork, lrwork, iwork, liwork, info)
+    deallocate (work, rwork, iwork)
+
+    if (info /= 0) then
+      write (errormsg, "(i20)") info
+      errormsg = "Subroutine zhegvd failed with info = "//trim(adjustl(errormsg))//"."
+      error stop trim(errormsg)
+    endif
+
+    if (present(D)) then
+      D = cmplx_0
+      do i = 1, dim
+        D(i, i) = cmplx(lst(i), 0.0_dp, dp)
+      enddo
+    endif
+
+    if (present(eig)) eig = lst
+
+  end subroutine diagonalize_hermitian_generalized
 
   pure function deg_list(eig, degen_thr)
     !========================================================================!

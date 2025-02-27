@@ -21,4 +21,23 @@ module OneDim_QM_NI_defs
   !or \hbar\omega in peV to angular frequencies \omega in ms^{-1}.
   real(dp), parameter, public :: time_conversion_factor = 1.519267449_dp
 
+  public :: set_metric
+
+contains
+
+  function set_metric(N) result(u)
+    integer, intent(in) :: N
+    complex(dp) :: u(N, N)
+
+    integer :: i
+
+    u = cmplx_0
+    u(1, 1) = epsilon(1.0_dp)
+    do i = 2, N - 1
+      u(i, i) = cmplx_1
+    enddo
+    u(N, N) = epsilon(1.0_dp)
+
+  end function set_metric
+
 end module OneDim_QM_NI_defs
