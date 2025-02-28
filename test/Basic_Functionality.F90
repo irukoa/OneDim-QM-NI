@@ -106,7 +106,7 @@ program Basic_Functionality
   write (unit=stderr, fmt="(A)") "Start testing free dynamical evolution."
   write (unit=stderr, fmt="(A)") "Details: electronic system, 1m_e, [0, 1]\r{A} range,"
   write (unit=stderr, fmt="(A)") "selected 2 states, starting with state #3,"
-  write (unit=stderr, fmt="(A)") "Time propagation from 0 to 1 eV^{-1}."
+  write (unit=stderr, fmt="(A)") "Time propagation from 0 to 1 fs."
   write (unit=stderr, fmt="(A)") ""
 
   call td_test%init_td(t_start=0.0_dp, &
@@ -139,6 +139,85 @@ program Basic_Functionality
   rnd_tm_instant = floor(rnd_tm)
   tevop_ref = exp(-cmplx_i*td_test%eig(3)*time_conversion_factor*real(rnd_tm_instant - 1, dp)/real(Nt - 1, dp))
   if (abs(td_test%tevop(1, 1, rnd_tm_instant) - tevop_ref) > tol) error stop "FAIL: Value mismatch."
+  write (unit=stderr, fmt="(A)") "PASS"
+  write (unit=stderr, fmt="(A)") ""
+
+  write (unit=stderr, fmt="(A)") "Start testing boundary conditions."
+  write (unit=stderr, fmt="(A)") "Consider the particle in a box system with N = "//trim(adjustl(aux))//" states."
+  write (unit=stderr, fmt="(A)") "Details: electronic system, 1m_e, [0, 1]\r{A} range."
+  write (unit=stderr, fmt="(A)") ""
+
+  call td_test%init(name="Electronic_PiaB_Test_D", &
+                    type="electronic", &
+                    mass=1.0_dp, &
+                    start=0.0_dp, &
+                    finish=1.0_dp, &
+                    steps=N, &
+                    boundary_cond_s="DIRICHLET", &
+                    boundary_cond_f="DIRICHLET", &
+                    args=[1.0_dp], &
+                    potential=particle_in_a_box_pot)
+
+  write (unit=stderr, fmt="(A)") "Dirichlet boundary conditions at both ends..."
+  if (any(abs(td_test%rot(1, 1:N - 2)) > tol)) error stop "FAIL: Value mismatch."
+  if (any(abs(td_test%rot(N, 1:N - 2)) > tol)) error stop "FAIL: Value mismatch."
+  write (unit=stderr, fmt="(A)") "PASS"
+  write (unit=stderr, fmt="(A)") ""
+
+  call td_test%init(name="Electronic_PiaB_Test_N", &
+                    type="electronic", &
+                    mass=1.0_dp, &
+                    start=0.0_dp, &
+                    finish=1.0_dp, &
+                    steps=N, &
+                    boundary_cond_s="NEUMANN", &
+                    boundary_cond_f="NEUMANN", &
+                    args=[1.0_dp], &
+                    potential=particle_in_a_box_pot)
+
+  write (unit=stderr, fmt="(A)") "Neumann boundary conditions at both ends..."
+  if (any(abs(td_test%rot(2, 1:N - 2) - td_test%rot(1, 1:N - 2)) > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
+  if (any(abs(td_test%rot(N, 1:N - 2) - td_test%rot(N - 1, 1:N - 2)) > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
+  write (unit=stderr, fmt="(A)") "PASS"
+  write (unit=stderr, fmt="(A)") ""
+
+  call td_test%init(name="Electronic_PiaB_Test_R", &
+                    type="electronic", &
+                    mass=1.0_dp, &
+                    start=0.0_dp, &
+                    finish=1.0_dp, &
+                    steps=N, &
+                    boundary_cond_s="ROBIN", &
+                    boundary_cond_f="ROBIN", &
+                    boundary_param_s=1.0_dp, &
+                    boundary_param_f=1.0_dp, &
+                    args=[1.0_dp], &
+                    potential=particle_in_a_box_pot)
+
+  write (unit=stderr, fmt="(A)") "Robin boundary conditions at both ends..."
+  if (any(abs(td_test%rot(1, 1:N - 2) - (td_test%rot(2, 1:N - 2) - td_test%rot(1, 1:N - 2))*(N - 1)) &
+          > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
+  if (any(abs(td_test%rot(N, 1:N - 2) - (td_test%rot(N - 1, 1:N - 2) - td_test%rot(N, 1:N - 2))*(N - 1)) &
+          > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
+  write (unit=stderr, fmt="(A)") "PASS"
+  write (unit=stderr, fmt="(A)") ""
+
+  call td_test%init(name="Electronic_PiaB_Test_P", &
+                    type="electronic", &
+                    mass=1.0_dp, &
+                    start=0.0_dp, &
+                    finish=1.0_dp, &
+                    steps=N, &
+                    boundary_cond_s="PERIODIC", &
+                    boundary_cond_f="PERIODIC", &
+                    args=[1.0_dp], &
+                    potential=particle_in_a_box_pot)
+
+  write (unit=stderr, fmt="(A)") "Periodic boundary conditions at both ends..."
+  if (any(abs(td_test%rot(1, 1:N - 2) - td_test%rot(N, 1:N - 2)) &
+          > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
+  if (any(abs((td_test%rot(2, 1:N - 2) - td_test%rot(1, 1:N - 2)) - (td_test%rot(N, 1:N - 2) - td_test%rot(N - 1, 1:N - 2))) &
+          > 10.0E5_dp*tol)) error stop "FAIL: Value mismatch."
   write (unit=stderr, fmt="(A)") "PASS"
   write (unit=stderr, fmt="(A)") ""
 
