@@ -16,7 +16,7 @@ This is a tiny modern Fortran library for illustration and teaching purposes. It
 The library solves the time independent Schrödinger equation in the position basis,
 
 $$
-\frac{-\hbar^2}{2m}\frac{\partial^2 \Psi(x)}{\partial x^2} + V(x)\Psi(x) = E_n \Psi(x).
+H\Psi(x)=\frac{-\hbar^2}{2m}\frac{\partial^2 \Psi(x)}{\partial x^2} + V(x)\Psi(x) = E_n \Psi(x).
 $$
 
 The Laplace operator is considered by its finite difference approximation,
@@ -34,31 +34,16 @@ $$
 we obtain
 
 $$
-\begin{pmatrix}
--2\alpha + V(x_1)& \alpha & 0 & \cdots& \cdots& \cdots\\
-\alpha & -2\alpha + V(x_2)& \alpha & 0 & \cdots & \cdots \\
-0 & \alpha & -2\alpha + V(x_3)& \alpha & 0 & \cdots \\
-0 & 0 & \ddots& \ddots& \ddots
-\end{pmatrix}\begin{pmatrix}
-\Psi(x_1) \\
-\vdots \\
-\Psi(x_N)
-\end{pmatrix}
+[H\Psi(x)]_i = \alpha \Psi(x_{i-1}) + [-2\alpha + V(x_i)]\Psi(x_i) + \alpha \Psi(x_{i+1}) = E_n\Psi(x_i)
 $$
 
-$$ = E_n\begin{pmatrix}
-\Psi(x_1) \\
-\vdots \\
-\Psi(x_N)
-\end{pmatrix},
-$$
 with
 
 $$
 \alpha = \frac{-\hbar^2}{2m\epsilon^2}.
 $$
 
-Diagonalizing, we obtain the eigenvalues and eigenstates to pass from the position basis to the Hamiltonian basis.
+This is a linear system expressible as a matrix equation. Diagonalizing, we obtain the eigenvalues and eigenstates to pass from the position basis to the Hamiltonian basis.
 
 ### Time dependent systems.
 
@@ -75,6 +60,90 @@ t_j = t_{\text{st}} + T\frac{j-1}{N_t-1} = t_{\text{st}} + \delta t (j-1).
 $$
 
 In this case, $\hat{H}(t)$ is the time dependent Hamiltonian. We consider that it can be expressed in terms of the steady state Hamiltonian operator and the position operator. In practice, $\hat{H}(t)$ is constructed in the Hamiltonian basis.
+
+### Boundary conditions
+
+The possible boundary conditions are,
+
+#### Dirichlet
+
+$$
+\Psi(x_{1}) = 0,
+$$
+
+$$
+\Psi(x_{N}) = 0.
+$$
+
+Applicable independently to each end.
+
+#### Neumann
+
+$$
+\Psi'(x_{1}) = 0,
+$$
+
+$$
+\Psi'(x_{N}) = 0.
+$$
+
+Applicable independently to each end.
+
+#### Robin
+
+$$
+\Psi(x_{1}) = \alpha \Psi'(x_{1}),
+$$
+
+$$
+\Psi(x_{N}) = -\alpha \Psi'(x_{N}).
+$$
+
+Applicable independently to each end.
+
+#### Periodic
+
+$$
+\Psi(x_{1}) = \Psi(x_{N}),
+$$
+
+$$
+\Psi'(x_{1}) = \Psi'(x_{N}).
+$$
+
+#### Free
+
+Assumes singular Sturm-Liouville problem.
+
+Any of the boundary conditions are imposed by solving the generalized eigenvalue problem
+
+$$
+A\psi_n = E_n B\psi_n
+$$
+
+with
+
+$$
+[A]_{2:N-1,2:N-1} = [H]_{2:N-1,2:N-1}
+$$
+
+and
+
+$$
+[B]_{2:N-1,2:N-1} = I_{N-2},\;B_{1, 1} = B_{N, N} = 0.
+$$
+
+Thus, given that
+
+$$
+\sum_{i=1}^{N}A_{1i}\psi_n(x_i) = 0,
+$$
+
+$$
+\sum_{i=1}^{N}A_{Ni}\psi_n(x_i) = 0,
+$$
+
+we fix boundary conditions by setting the constants $A_{1i}$, $A_{Ni}$.
 
 </details>
 
@@ -94,7 +163,7 @@ integer, parameter, public :: dp = kind(1.0d0)
 ## `type(steady_state_system) :: a`
 Procedure | Description | Parameters
 --- | --- | ---
-Constructor subroutine. <br /> Usage: <br /> `call a%init(name, type, mass, start, finish, steps, args, potential[, silent])` | Initializes an steady state system and calculates its eigenvalues. | `character(len=*), intent(in) :: name`: name of the system. <br />`character(len=*), intent(in) :: type`: either `electronic` or `atomic`. If `electronic`, assumes energies in eV, lengths in $\text{\r{A}}$-s, masses in units of the electron mass $m_e$ and time scales in fs-s. If `atomic`, assumes energies in peV, lengths in $\mu$m-s, masses in units of the atomic mass unit AMU and time scales in ms-s. <br /> `real(dp), intent(in) :: mass`: mass of the particle in electronic or atomic units. <br /> `real(dp), intent(in) :: start, finish`: length of the 1-dimensional space in electronic or atomic units. <br />`integer, intent(in) :: steps`: number of discretization steps of the interval and number of quantum levels.<br />`real(dp), intent(in) :: args(:)`: Arguments passed to the potential function. <br />`procedure(frml) :: potential`: implementation of the potential function in electronic or atomic units. Must comply with interface [`frml`](#intfc_frml).<br />`logical, optional, intent(in) :: silent`: if `.true.`, the program will not write to terminal.
+Constructor subroutine. <br /> Usage: <br /> `call a%init(name, type, mass, start, finish, steps, args, potential[, silent, boundary_cond_s, boundary_cond_f, boundary_param_s, boundary_param_f])` | Initializes an steady state system and calculates its eigenvalues, eigenvectors and position operator. | `character(len=*), intent(in) :: name`: name of the system. <br />`character(len=*), intent(in) :: type`: either `electronic` or `atomic`. If `electronic`, assumes energies in eV, lengths in $\text{\r{A}}$-s, masses in units of the electron mass $m_e$ and time scales in fs-s. If `atomic`, assumes energies in peV, lengths in $\mu$m-s, masses in units of the atomic mass unit AMU and time scales in ms-s. <br /> `real(dp), intent(in) :: mass`: mass of the particle in electronic or atomic units. <br /> `real(dp), intent(in) :: start, finish`: length of the 1-dimensional space in electronic or atomic units. <br />`integer, intent(in) :: steps`: number of discretization steps of the interval and number of quantum levels.<br />`real(dp), intent(in) :: args(:)`: Arguments passed to the potential function. <br />`procedure(frml) :: potential`: implementation of the potential function in electronic or atomic units. Must comply with interface [`frml`](#intfc_frml).<br />`logical, optional, intent(in) :: silent`: if `.true.`, the program will not write to terminal.<br /> `character(len=*), optional, intent(in) ::boundary_cond_s, boundary_cond_f`: boundary condition specifier. Options are `Free`, `Dirichlet`, `Neumann`, `Robin` and `Periodic`. If only `boundary_cond_s` is specified, the boundary conditions are fixed at both ends. If `boundary_cond_s` is not specified, assumes `Free` boundary conditions at both ends.<br /> `real(dp), optional, intent(in) :: boundary_param_s`: must only be specified if `boundary_cond_s = "Robin"`. Is a real nonzero constant $\alpha$ such that $\Psi_n(x_1) = \alpha \Psi_n'(x_1)$.<br /> `real(dp), optional, intent(in) :: boundary_param_f`: must only be specified if `boundary_cond_f = "Robin"`. Is a real nonzero constant $\alpha$ such that $\Psi_n(x_N) = -\alpha \Psi_n'(x_N)$.
 
 Component | Description
 --- | ---

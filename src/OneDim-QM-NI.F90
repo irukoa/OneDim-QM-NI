@@ -272,9 +272,9 @@ contains
 
   subroutine construcor_st_boundary(self, name, type, mass, &
                                     start, finish, steps, &
+                                    args, potential, silent, &
                                     boundary_cond_s, boundary_cond_f, &
-                                    boundary_param_s, boundary_param_f, &
-                                    args, potential, silent)
+                                    boundary_param_s, boundary_param_f)
     class(steady_state_system), intent(out) :: self
 
     character(len=*), intent(in) :: name
