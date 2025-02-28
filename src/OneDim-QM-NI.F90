@@ -8,7 +8,7 @@ module OneDim_QM_NI
     electronic_kinetic_prefactor, atomic_kinetic_prefactor, &
     time_conversion_factor, set_metric
   use OneDim_QM_NI_utility, only: diagonalize, inverse, deg_list, schur, SVD, expsh, logu, &
-    diagonalize_hermitian_generalized
+    diagonalize_gen => diagonalize_hermitian_generalized
   use OneDim_QM_NI_implementations, only: particle_in_a_box_pot, harmonic_oscillator_pot, &
     free_particle_hamil, dipole_cosine_hamil
 
@@ -304,8 +304,13 @@ contains
     logical :: not_silent = .true.
 
     real(dp) :: al_a, al_b
+    logical :: bc_s, bc_f
 
+    !"Robin" type boundary conditions.
     al_a = 0.0_dp; al_b = 0.0_dp
+    !Set if boundary conditions are set at endpoints.
+    !Only applies if boundary condition is "free" at some endpoint.
+    bc_s = .true.; bc_f = .true.
 
     self%name = name
 
@@ -349,6 +354,7 @@ contains
       case ("free", "Free", "FREE")
         self%bound_cond_s = -1
         self%bound_cond_f = -1
+        bc_s = .false.; bc_f = .false.
         if (not_silent) write (unit=stdout, fmt="(A)") "Setting 'free' boundary conditions..."
         if (present(boundary_param_s)) error stop &
         "SS System specification error: selected 'free' boundary &
@@ -394,6 +400,7 @@ contains
       select case (boundary_cond_s)
       case ("free", "Free", "FREE")
         self%bound_cond_s = -1
+        bc_s = .false.
         if (not_silent) write (unit=stdout, fmt="(A)") "Interval start: setting 'free' boundary conditions..."
         if (present(boundary_param_s)) error stop &
         "SS System specification error: selected 'free' boundary &
@@ -432,6 +439,7 @@ contains
       select case (boundary_cond_f)
       case ("free", "Free", "FREE")
         self%bound_cond_f = -1
+        bc_f = .false.
         if (not_silent) write (unit=stdout, fmt="(A)") "Interval end: setting 'free' boundary conditions..."
         if (present(boundary_param_f)) error stop &
         "SS System specification error: selected 'free' boundary &
@@ -473,14 +481,6 @@ contains
 
       if ((self%bound_cond_f == 3) .and. (self%bound_cond_s /= 3)) error stop &
       "SS System specification error: boundary_cond_f is <<periodic>>, &
-      &but boundary_cond_s not."
-
-      if ((self%bound_cond_s == -1) .and. (self%bound_cond_f /= -1)) error stop &
-      "SS System specification error: boundary_cond_s is <<free>>, &
-      &but boundary_cond_f not."
-
-      if ((self%bound_cond_f == -1) .and. (self%bound_cond_s /= -1)) error stop &
-      "SS System specification error: boundary_cond_f is <<free>>, &
       &but boundary_cond_s not."
 
     endif
@@ -552,16 +552,16 @@ contains
     if (not_silent) write (unit=stdout, fmt="(A)") "Position matrix calculated (position representation)..."
     if (not_silent) write (unit=stdout, fmt="(A)") "Diagonalizing..."
 
-    if (self%bound_cond_s == -1) then
-      call diagonalize(matrix=self%Hx, P=self%rot, eig=self%eig, D=self%Hh)
-    else
-      call diagonalize_hermitian_generalized(matrix=self%Hx, metric=set_metric(self%number_of_states), &
-                                             P=self%rot, eig=self%eig, D=self%Hh)
+    call diagonalize_gen(matrix=self%Hx, &
+                         metric=set_metric(self%number_of_states, bc_s, bc_f), &
+                         P=self%rot, eig=self%eig, D=self%Hh)
 
-      !Due to the numerical scheme we have used to set boundary conditions,
+    if (bc_s .and. bc_f) then !Boundary conditions are set at both endpoints.
+
+      !Due to the numerical scheme we have used to set 2 boundary conditions,
       !we have introduced 2 unphysical eigenvalues which tend to
       !infinity in magnitude. We call them "a" and "b" and obey abs(a)>=abs(b).
-      !Given that eig is ordered in ascending order we distinguish
+      !Given that eig is ordered in ascending order we distinguish the only
       !4 possible locations for these eigenvalues in the eig array:
       !Pos.: 1 2 ... N-1 N
       !#1 : (a b ...      ),
@@ -577,9 +577,10 @@ contains
       absmin = minval(abs(self%eig))
       absmax = maxval(abs(self%eig))
 
+      !Note that in cases #2, #3, #4 we have to set back=.true. in maxloc.
       if (maxloc(abs(self%eig), 1) == 1) then !Case #1 or #2.
 
-        self%eig(maxloc(abs(self%eig), 1)) = absmin !Or other value
+        self%eig(maxloc(abs(self%eig), 1)) = absmin
         if (maxloc(abs(self%eig), 1) == 2) then !Case #1.
           shift = 2
           self%eig(maxloc(abs(self%eig), 1)) = absmin
@@ -593,7 +594,7 @@ contains
         self%eig(maxloc(abs(self%eig), 1, back=.true.)) = absmin
         if (maxloc(abs(self%eig), 1) == 1) then !Case #3.
           shift = 1
-          self%eig(maxloc(abs(self%eig), 1)) = absmin !Or other value
+          self%eig(maxloc(abs(self%eig), 1)) = absmin
         elseif (maxloc(abs(self%eig), 1, back=.true.) == self%number_of_states - 1) then !Case #4.
           shift = 0
           self%eig(maxloc(abs(self%eig), 1, back=.true.)) = absmin
@@ -606,13 +607,49 @@ contains
       self%eig(self%number_of_states) = absmax
       self%eig(self%number_of_states - 1) = absmax
 
-      !Shift the rotation and Hamiltonian matrices
-      !expressed in the Hamiltonian gauge.
-      self%rot = cshift(self%rot, shift, dim=2)
-      do i = 1, self%number_of_states
-        self%Hh(i, i) = self%eig(i)*cmplx_1
-      enddo
+    elseif (((.not. bc_s) .and. (bc_f)) .or. ((bc_s) .and. (.not. bc_f))) then !Boundary conditions are set at one of the endpoints.
+
+      !Due to the numerical scheme we have used to set 1 boundary condition,
+      !we have introduced 1 unphysical eigenvalue which tends to
+      !infinity in magnitude. We call it "a".
+      !Given that eig is ordered in ascending order we distinguish the only
+      !2 possible locations for these eigenvalues in the eig array:
+      !Pos.: 1 2 ... N-1 N
+      !#1 : (a   ...      ),
+      !#2 : (    ...     a),
+      !Our goal is to determine if we have to shift to the
+      !left to set the eigenvalue at the top of the eigenavle list,
+      !after to the most innacurate levels. For the scheme to work,
+      !we temporarily set the value of a to the minimum value of
+      !the array. Next we shift the values back.
+
+      absmin = minval(abs(self%eig))
+      absmax = maxval(abs(self%eig))
+
+      if (maxloc(abs(self%eig), 1) == 1) then !Case #1.
+        self%eig(maxloc(abs(self%eig), 1)) = absmin
+        shift = 1
+      elseif (maxloc(abs(self%eig), 1, back=.true.) == self%number_of_states) then !Case #2.
+        self%eig(maxloc(abs(self%eig), 1, back=.true.)) = absmin
+        shift = 0
+      endif
+
+      !Shift eigenvales and set unphysical values.
+      self%eig = cshift(self%eig, shift)
+      self%eig(self%number_of_states) = absmax
+
+    elseif ((.not. bc_s) .and. (.not. bc_f)) then !Boundary conditions are not set at both endpoints.
+
+      shift = 0
+
     endif
+
+    !Shift the rotation and Hamiltonian matrices
+    !expressed in the Hamiltonian gauge.
+    self%rot = cshift(self%rot, shift, dim=2)
+    do i = 1, self%number_of_states
+      self%Hh(i, i) = self%eig(i)*cmplx_1
+    enddo
 
     if (not_silent) write (unit=stdout, fmt="(A)") "Transforming position matrix to Hamiltonian representation..."
 
@@ -658,8 +695,9 @@ contains
     !1st boundary.
     select case (cond_a)
     case (-1) !Free.
-      u = Hamil(start, finish, steps, formula, prefactor, args)
-      return
+      u(1, 1) = (-2*k_fac + formula(start, args))*cmplx_1
+      u(1, 2) = (k_fac)*cmplx_1
+      u(2, 1) = (k_fac)*cmplx_1
     case (0) !Dirichlet.
       u(1, 1) = cmplx_1
     case (1) !Neumann.
@@ -677,8 +715,9 @@ contains
     !2nd boundary.
     select case (cond_b)
     case (-1) !Free.
-      u = Hamil(start, finish, steps, formula, prefactor, args)
-      return
+      u(steps, steps) = (-2*k_fac + formula(finish, args))*cmplx_1
+      u(steps, steps - 1) = (k_fac)*cmplx_1
+      u(steps - 1, steps) = (k_fac)*cmplx_1
     case (0) !Dirichlet.
       u(steps, steps) = cmplx_1
     case (1) !Neumann.

@@ -25,18 +25,23 @@ module OneDim_QM_NI_defs
 
 contains
 
-  function set_metric(N) result(u)
+  function set_metric(N, st, fs) result(u)
+    !Spetialized metric to account for boundary conditions.
     integer, intent(in) :: N
+    logical, intent(in) :: st, fs
     complex(dp) :: u(N, N)
 
     integer :: i
 
     u = cmplx_0
-    u(1, 1) = epsilon(1.0_dp)
-    do i = 2, N - 1
+    do i = 1, N
       u(i, i) = cmplx_1
     enddo
-    u(N, N) = epsilon(1.0_dp)
+
+    !Do we impose boundary conditions at start and finish?
+    !If so, set the corresponding entry to (numerical) zero.
+    if (st) u(1, 1) = epsilon(1.0_dp)
+    if (fs) u(N, N) = epsilon(1.0_dp)
 
   end function set_metric
 
